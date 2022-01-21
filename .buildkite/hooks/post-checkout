@@ -30,4 +30,4 @@ unset AWS_CONFIG_FILE
 
 # handle caching absolute paths
 mkdir -p .buildkite-cache
-ln -s ~/.asdf/downloads .buildkite-cache/asdf-downloads
+ln -s ~/.asdf .buildkite-cache/asdf

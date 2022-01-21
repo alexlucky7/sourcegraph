@@ -13,12 +13,11 @@ func ASDFInstall() []bk.StepOpt {
 			ID:          "asdf",
 			Key:         "cache-asdf-{{ checksum '.tool-versions' }}",
 			RestoreKeys: []string{"cache-asdf-{{ checksum '.tool-versions' }}"},
-			Paths:       []string{".buildkite-cache/asdf-downloads"},
+			Paths:       []string{".buildkite-cache/asdf/downloads"},
 		}),
 		buildkite.Cmd("ls ~/.asdf/downloads/"),
-		buildkite.Cmd("ls .buildkite-cache/asdf-downloads/"),
+		buildkite.Cmd("ls .buildkite-cache/asdf/downloads/"),
 		buildkite.Cmd("asdf list"),
 		buildkite.Cmd("asdf install"),
-		buildkite.Cmd("sleep 50000"),
 	}
 }
