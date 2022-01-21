@@ -123,7 +123,6 @@ func addPrettier(pipeline *bk.Pipeline) {
 			RestoreKeys: []string{"cache-node_modules-{{ checksum 'yarn.lock' }}"},
 			Paths:       []string{"node_modules"},
 		}),
-		bk.Cmd("du -sh node_modules/"),
 		bk.Cmd("yarn install --prefer-offline --frozen-lockfile"))
 }
 
