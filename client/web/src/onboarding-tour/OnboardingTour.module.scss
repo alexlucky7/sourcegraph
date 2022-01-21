@@ -2,7 +2,7 @@ $oc-blue: #ccedff;
 
 .card {
     padding: 0.1875rem;
-    background: linear-gradient(to right, #e4d3fc 0%, #d7f0fd 100%);
+    background: var(--marketing-gradient);
     color: var(--body-color);
     border-radius: 3px;
 

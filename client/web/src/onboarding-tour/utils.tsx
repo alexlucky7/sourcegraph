@@ -18,6 +18,6 @@ export const parseURIMarkers = (searchParameters: string): { isTour: boolean; st
     return { isTour, stepId }
 }
 
-const isAbsoluteURL = (url: string): boolean => url.startsWith('http')
+const isAbsoluteURL = (url: string): boolean => /^https?:\/\//i.test(url)
 
 export const isExternalURL = (url: string): boolean => isAbsoluteURL(url) && new URL(url).origin !== location.origin

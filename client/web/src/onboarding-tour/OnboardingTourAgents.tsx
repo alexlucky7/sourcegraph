@@ -50,13 +50,11 @@ export const OnboardingTourInfoAgent: React.FunctionComponent<OnboardingTourInfo
 
         useEffect(() => {
             const { isTour, stepId } = parseURIMarkers(location.search)
-
             if (!isTour || !stepId) {
                 return
             }
 
             const info = steps.find(step => stepId === step.id)?.info
-
             if (info) {
                 setInfo(info)
             }
