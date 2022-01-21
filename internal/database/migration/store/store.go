@@ -19,23 +19,23 @@ import (
 
 type Store struct {
 	*basestore.Store
-	migrationsTable string
-	operations      *Operations
+	schemaName string
+	operations *Operations
 }
 
 func NewWithDB(db dbutil.DB, migrationsTable string, operations *Operations) *Store {
 	return &Store{
-		Store:           basestore.NewWithDB(db, sql.TxOptions{}),
-		migrationsTable: migrationsTable,
-		operations:      operations,
+		Store:      basestore.NewWithDB(db, sql.TxOptions{}),
+		schemaName: migrationsTable,
+		operations: operations,
 	}
 }
 
 func (s *Store) With(other basestore.ShareableStore) *Store {
 	return &Store{
-		Store:           s.Store.With(other),
-		migrationsTable: s.migrationsTable,
-		operations:      s.operations,
+		Store:      s.Store.With(other),
+		schemaName: s.schemaName,
+		operations: s.operations,
 	}
 }
 
@@ -46,9 +46,9 @@ func (s *Store) Transact(ctx context.Context) (*Store, error) {
 	}
 
 	return &Store{
-		Store:           txBase,
-		migrationsTable: s.migrationsTable,
-		operations:      s.operations,
+		Store:      txBase,
+		schemaName: s.schemaName,
+		operations: s.operations,
 	}, nil
 }
 
@@ -59,8 +59,8 @@ func (s *Store) EnsureSchemaTable(ctx context.Context) (err error) {
 	defer endObservation(1, observation.Args{})
 
 	queries := []*sqlf.Query{
-		sqlf.Sprintf(`CREATE TABLE IF NOT EXISTS %s(version bigint NOT NULL PRIMARY KEY)`, quote(s.migrationsTable)),
-		sqlf.Sprintf(`ALTER TABLE %s ADD COLUMN IF NOT EXISTS dirty boolean NOT NULL`, quote(s.migrationsTable)),
+		sqlf.Sprintf(`CREATE TABLE IF NOT EXISTS %s(version bigint NOT NULL PRIMARY KEY)`, quote(s.schemaName)),
+		sqlf.Sprintf(`ALTER TABLE %s ADD COLUMN IF NOT EXISTS dirty boolean NOT NULL`, quote(s.schemaName)),
 
 		sqlf.Sprintf(`CREATE TABLE IF NOT EXISTS migration_logs(id SERIAL PRIMARY KEY)`),
 		sqlf.Sprintf(`ALTER TABLE migration_logs ADD COLUMN IF NOT EXISTS migration_logs_schema_version integer NOT NULL`),
@@ -71,6 +71,37 @@ func (s *Store) EnsureSchemaTable(ctx context.Context) (err error) {
 		sqlf.Sprintf(`ALTER TABLE migration_logs ADD COLUMN IF NOT EXISTS finished_at timestamptz`),
 		sqlf.Sprintf(`ALTER TABLE migration_logs ADD COLUMN IF NOT EXISTS success boolean`),
 		sqlf.Sprintf(`ALTER TABLE migration_logs ADD COLUMN IF NOT EXISTS error_message text`),
+	}
+
+	minMigrationVersions := map[string]int{
+		"schema_migrations":              1528395834,
+		"codeintel_schema_migrations":    1000000015,
+		"codeinsights_schema_migrations": 1000000000,
+	}
+	if minMigrationVersion, ok := minMigrationVersions[s.schemaName]; ok {
+		queries = append(queries, sqlf.Sprintf(`
+			WITH schema_version AS (
+				SELECT * FROM %s LIMIT 1
+			)
+			INSERT INTO migration_logs (
+				migration_logs_schema_version,
+				schema,
+				version,
+				up,
+				success,
+				started_at,
+				finished_at
+			)
+			SELECT %s, %s, version, true, true, NOW(), NOW()
+			FROM generate_series(%s, (SELECT version FROM schema_version)) version
+			WHERE NOT (SELECT dirty FROM schema_version) AND NOT EXISTS (SELECT 1 FROM migration_logs WHERE schema = %s)
+		`,
+			quote(s.schemaName),
+			currentMigrationLogSchemaVersion,
+			s.schemaName,
+			minMigrationVersion,
+			s.schemaName,
+		))
 	}
 
 	tx, err := s.Transact(ctx)
@@ -88,26 +119,50 @@ func (s *Store) EnsureSchemaTable(ctx context.Context) (err error) {
 	return nil
 }
 
-func (s *Store) Version(ctx context.Context) (version int, dirty bool, ok bool, err error) {
-	ctx, endObservation := s.operations.version.With(ctx, &err, observation.Args{})
+func (s *Store) Versions(ctx context.Context) (appliedVersions, pendingVersions, failedVersions []int, err error) {
+	ctx, endObservation := s.operations.versions.With(ctx, &err, observation.Args{})
 	defer endObservation(1, observation.Args{})
 
-	rows, err := s.Query(ctx, sqlf.Sprintf(`SELECT version, dirty FROM %s`, quote(s.migrationsTable)))
+	migrationLogs, err := scanMigrationLogs(s.Query(ctx, sqlf.Sprintf(versionsQuery, s.schemaName)))
 	if err != nil {
-		return 0, false, false, err
+		return nil, nil, nil, err
 	}
-	defer func() { err = basestore.CloseRows(rows, err) }()
 
-	if rows.Next() {
-		if err := rows.Scan(&version, &dirty); err != nil {
-			return 0, false, false, err
+	for _, migrationLog := range migrationLogs {
+		if migrationLog.Success == nil {
+			pendingVersions = append(pendingVersions, migrationLog.Version)
+			continue
 		}
-
-		return version, dirty, true, nil
+		if !*migrationLog.Success {
+			failedVersions = append(failedVersions, migrationLog.Version)
+			continue
+		}
+		if migrationLog.Up {
+			appliedVersions = append(appliedVersions, migrationLog.Version)
+		}
 	}
 
-	return 0, false, false, nil
+	return appliedVersions, pendingVersions, failedVersions, nil
 }
+
+const versionsQuery = `
+-- source: internal/database/migration/store/store.go:Versions
+WITH ranked_migration_logs AS (
+	SELECT
+		migration_logs.*,
+		ROW_NUMBER() OVER (PARTITION BY version ORDER BY finished_at DESC) AS row_number
+	FROM migration_logs
+	WHERE schema = %s
+)
+SELECT
+	schema,
+	version,
+	up,
+	success
+FROM ranked_migration_logs
+WHERE row_number = 1
+ORDER BY version
+`
 
 // Lock creates and holds an advisory lock. This method returns a function that should be called
 // once the lock should be released. This method accepts the current function's error output and
@@ -173,7 +228,7 @@ func (s *Store) TryLock(ctx context.Context) (_ bool, _ func(err error) error, e
 }
 
 func (s *Store) lockKey() int32 {
-	return locker.StringKey(fmt.Sprintf("%s:migrations", s.migrationsTable))
+	return locker.StringKey(fmt.Sprintf("%s:migrations", s.schemaName))
 }
 
 func (s *Store) Up(ctx context.Context, definition definition.Definition) (err error) {
@@ -199,14 +254,7 @@ func (s *Store) Down(ctx context.Context, definition definition.Definition) (err
 }
 
 func (s *Store) runMigrationQuery(ctx context.Context, definitionVersion int, up bool, query *sqlf.Query) (err error) {
-	targetVersion := definitionVersion
-	expectedCurrentVersion := definitionVersion - 1
-	if !up {
-		targetVersion = definitionVersion - 1
-		expectedCurrentVersion = definitionVersion
-	}
-
-	logID, err := s.setVersion(ctx, up, expectedCurrentVersion, targetVersion, definitionVersion)
+	logID, err := s.createMigrationLog(ctx, definitionVersion, up)
 	if err != nil {
 		return err
 	}
@@ -215,7 +263,7 @@ func (s *Store) runMigrationQuery(ctx context.Context, definitionVersion int, up
 		if execErr := s.Exec(ctx, sqlf.Sprintf(
 			`UPDATE migration_logs SET finished_at = NOW(), success = %s, error_message = %s WHERE id = %d`,
 			err == nil,
-			strPtr(err),
+			errMsgPtr(err),
 			logID,
 		)); execErr != nil {
 			err = multierror.Append(err, execErr)
@@ -226,40 +274,28 @@ func (s *Store) runMigrationQuery(ctx context.Context, definitionVersion int, up
 		return err
 	}
 
-	if err := s.Exec(ctx, sqlf.Sprintf(`UPDATE %s SET dirty=false`, quote(s.migrationsTable))); err != nil {
+	if err := s.Exec(ctx, sqlf.Sprintf(`UPDATE %s SET dirty=false`, quote(s.schemaName))); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Store) setVersion(ctx context.Context, up bool, expectedCurrentVersion, targetVersion, sourceVersion int) (_ int, err error) {
+func (s *Store) createMigrationLog(ctx context.Context, definitionVersion int, up bool) (_ int, err error) {
 	tx, err := s.Transact(ctx)
 	if err != nil {
 		return 0, err
 	}
 	defer func() { err = tx.Done(err) }()
 
-	assertionFailure := func(description string, args ...interface{}) error {
-		cta := "This condition should not be reachable by normal use of the migration store via the runner and indicates a bug. Please report this issue."
-		return errors.Errorf(description+"\n\n"+cta+"\n", args...)
-	}
-
-	if currentVersion, dirty, ok, err := tx.Version(ctx); err != nil {
+	if err := tx.validateVersion(ctx, definitionVersion, up); err != nil {
 		return 0, err
-	} else if dirty {
-		return 0, assertionFailure("dirty database")
-	} else if ok {
-		if currentVersion != expectedCurrentVersion {
-			return 0, assertionFailure("expected schema to have version %d, but has version %d\n", expectedCurrentVersion, currentVersion)
-		}
-
-		if err := tx.Exec(ctx, sqlf.Sprintf(`DELETE FROM %s`, quote(s.migrationsTable))); err != nil {
-			return 0, err
-		}
 	}
 
-	if err := tx.Exec(ctx, sqlf.Sprintf(`INSERT INTO %s (version, dirty) VALUES (%s, true)`, quote(s.migrationsTable), targetVersion)); err != nil {
+	if err := tx.Exec(ctx, sqlf.Sprintf(`DELETE FROM %s`, quote(s.schemaName))); err != nil {
+		return 0, err
+	}
+	if err := tx.Exec(ctx, sqlf.Sprintf(`INSERT INTO %s (version, dirty) VALUES (%s, true)`, quote(s.schemaName), definitionVersion)); err != nil {
 		return 0, err
 	}
 
@@ -275,8 +311,8 @@ func (s *Store) setVersion(ctx context.Context, up bool, expectedCurrentVersion,
 			RETURNING id
 		`,
 		currentMigrationLogSchemaVersion,
-		s.migrationsTable,
-		sourceVersion,
+		s.schemaName,
+		definitionVersion,
 		up,
 	)))
 	if err != nil {
@@ -286,9 +322,43 @@ func (s *Store) setVersion(ctx context.Context, up bool, expectedCurrentVersion,
 	return id, nil
 }
 
+func (s *Store) validateVersion(ctx context.Context, definitionVersion int, up bool) (err error) {
+	appliedVersions, pendingVersions, failedVersions, err := s.Versions(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			cta := "This condition should not be reachable by normal use of the migration store via the runner and indicates a bug. Please report this issue."
+			err = errors.Errorf("%s\n\n%s\n", err, cta)
+		}
+	}()
+
+	if len(pendingVersions)+len(failedVersions) > 0 {
+		return errors.Errorf("dirty database; pending=%v failed=%v", pendingVersions, failedVersions)
+	}
+
+	found := false
+	for _, version := range appliedVersions {
+		if version == definitionVersion {
+			found = true
+			break
+		}
+	}
+
+	if up && found {
+		return errors.Errorf("migration %d is already applied", definitionVersion)
+	} else if !up && !found {
+		return errors.Errorf("migration %d has not been applied; nothing to revert", definitionVersion)
+	}
+
+	return nil
+}
+
 var quote = sqlf.Sprintf
 
-func strPtr(err error) *string {
+func errMsgPtr(err error) *string {
 	if err == nil {
 		return nil
 	}

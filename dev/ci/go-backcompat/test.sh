@@ -100,6 +100,9 @@ git checkout "${latest_minor_release_tag}"
 rm -rf ./migrations
 git checkout "${current_head}" -- "${PROTECTED_FILES[@]}"
 
+# TODO - document why
+./dev/ci/go-backcompat/unwrite_migrations.sh
+
 # If migration files have been renamed or deleted between these commits
 # (which historically we've done in response to reverted migrations), we
 # might end up with a combination of files from both commits that ruin

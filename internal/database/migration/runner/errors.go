@@ -2,24 +2,44 @@ package runner
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
 type SchemaOutOfDateError struct {
 	schemaName      string
-	currentVersion  int
-	expectedVersion int
+	missingVersions []int
 }
 
 func (e *SchemaOutOfDateError) Error() string {
+	ids := make([]string, 0, len(e.missingVersions))
+	for _, id := range e.missingVersions {
+		ids = append(ids, strconv.Itoa(id))
+	}
+
 	return (instructionalError{
 		class:       "schema out of date",
-		description: fmt.Sprintf("expected schema %q to be at or above version %d, currently at version %d\n", e.schemaName, e.expectedVersion, e.currentVersion),
+		description: fmt.Sprintf("schema %q requires the following migrations to be applied: %s\n", e.schemaName, strings.Join(ids, ", ")),
 		instructions: strings.Join([]string{
 			`This software expects a migrator instance to have run on this schema prior to the deployment of this process.`,
 			`If this error is occurring directly after an upgrade, roll back your instance to the previous versiona nd ensure the migrator instance runs successfully prior attempting to re-upgrade.`,
 		}, " "),
 	}).Error()
+}
+
+func newOutOfDateError(schemaContext schemaContext, schemaVersion schemaVersion) error {
+	definitions, err := schemaContext.schema.Definitions.Up(
+		schemaVersion.appliedVersions,
+		extractIDs(schemaContext.schema.Definitions.Leaves()),
+	)
+	if err != nil {
+		return err
+	}
+
+	return &SchemaOutOfDateError{
+		schemaName:      schemaContext.schema.Name,
+		missingVersions: extractIDs(definitions),
+	}
 }
 
 type instructionalError struct {
@@ -43,19 +63,5 @@ var errDirtyDatabase = instructionalError{
 		`The target schema is marked as dirty and no other migration operation is seen running on this schema.`,
 		`The last migration operation over this schema has failed (or, at least, the migrator instance issuing that migration has died).`,
 		`Please contact support@sourcegraph.com for further assistance.`,
-	}, " "),
-}
-
-// errMigrationContention occurs when the migrator refuses to operate on a schema as there
-// appears to be other migrator instances performing other concurrent operations over the
-// same schema. This error only occurs when downgrading or upgrading to a particular version,
-// and not on the happy-path use case of "upgrade to latest".
-var errMigrationContention = instructionalError{
-	class:       "migration contention",
-	description: "concurrent migrator instances appear to be running on this schema",
-	instructions: strings.Join([]string{
-		`We have detected other migrations operations occurring on this schema and opted to abort this operation.`,
-		`The state of the database is likely different than what was known at the time this command was issued.`,
-		`Please check the state of your target database and re-issue this command (ensuring correct arguments).`,
 	}, " "),
 }

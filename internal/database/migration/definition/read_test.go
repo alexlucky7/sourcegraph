@@ -43,44 +43,24 @@ func TestReadDefinitions(t *testing.T) {
 		}
 
 		expectedDefinitions := []comparableDefinition{
-			{ID: 10001, UpFilename: "10001_first.up.sql", DownFilename: "10001_first.down.sql", UpQuery: "10001 UP", DownQuery: "10001 DOWN"},
-			{ID: 10002, UpFilename: "10002_second.up.sql", DownFilename: "10002_second.down.sql", UpQuery: "10002 UP", DownQuery: "10002 DOWN"},
-			{ID: 10003, UpFilename: "10003_third.up.sql", DownFilename: "10003_third.down.sql", UpQuery: "10003 UP", DownQuery: "10003 DOWN"},
-			{ID: 10004, UpFilename: "10004_fourth.up.sql", DownFilename: "10004_fourth.down.sql", UpQuery: "10004 UP", DownQuery: "10004 DOWN"},
-			{ID: 10005, UpFilename: "10005_fifth.up.sql", DownFilename: "10005_fifth.down.sql", UpQuery: "10005 UP", DownQuery: "10005 DOWN"},
+			{ID: 10001, UpFilename: "10001/up.sql", DownFilename: "10001/down.sql", UpQuery: "10001 UP", DownQuery: "10001 DOWN"}, // first
+			{ID: 10002, UpFilename: "10002/up.sql", DownFilename: "10002/down.sql", UpQuery: "10002 UP", DownQuery: "10002 DOWN"}, // second
+			{ID: 10004, UpFilename: "10004/up.sql", DownFilename: "10004/down.sql", UpQuery: "10004 UP", DownQuery: "10004 DOWN"}, // third or fourth (2)
+			{ID: 10003, UpFilename: "10003/up.sql", DownFilename: "10003/down.sql", UpQuery: "10003 UP", DownQuery: "10003 DOWN"}, // third or fourth (1)
+			{ID: 10005, UpFilename: "10005/up.sql", DownFilename: "10005/down.sql", UpQuery: "10005 UP", DownQuery: "10005 DOWN"}, // fifth
 		}
 		if diff := cmp.Diff(expectedDefinitions, comparableDefinitions); diff != "" {
 			t.Fatalf("unexpected definitions (-want +got):\n%s", diff)
 		}
 	})
 
-	t.Run("missing upgrade query", func(t *testing.T) {
-		testReadDefinitionsError(t, "missing-upgrade-query", "not found")
-	})
-
-	t.Run("missing downgrade query", func(t *testing.T) {
-		testReadDefinitionsError(t, "missing-downgrade-query", "not found")
-	})
-
-	t.Run("duplicate upgrade query", func(t *testing.T) {
-		testReadDefinitionsError(t, "duplicate-upgrade-query", "duplicate upgrade query")
-	})
-
-	t.Run("duplicate downgrade query", func(t *testing.T) {
-		testReadDefinitionsError(t, "duplicate-downgrade-query", "duplicate downgrade query")
-	})
-
-	t.Run("gap in sequence", func(t *testing.T) {
-		testReadDefinitionsError(t, "gap-in-sequence", "migration identifiers jump")
-	})
-
-	t.Run("root-with-parent", func(t *testing.T) {
-		testReadDefinitionsError(t, "root-with-parent", "no roots")
-	})
-
-	t.Run("unexpected-parent", func(t *testing.T) {
-		testReadDefinitionsError(t, "unexpected-parent", "cycle")
-	})
+	t.Run("missing upgrade query", func(t *testing.T) { testReadDefinitionsError(t, "missing-upgrade-query", "malformed") })
+	t.Run("missing downgrade query", func(t *testing.T) { testReadDefinitionsError(t, "missing-downgrade-query", "malformed") })
+	t.Run("missing metadata", func(t *testing.T) { testReadDefinitionsError(t, "missing-metadata", "malformed") })
+	t.Run("no roots", func(t *testing.T) { testReadDefinitionsError(t, "no-roots", "no roots") })
+	t.Run("multiple roots", func(t *testing.T) { testReadDefinitionsError(t, "multiple-roots", "multiple roots") })
+	t.Run("cycle (connected to root)", func(t *testing.T) { testReadDefinitionsError(t, "cycle-traversal", "cycle") })
+	t.Run("cycle (disconnected from root)", func(t *testing.T) { testReadDefinitionsError(t, "cycle-size", "cycle") })
 }
 
 func testReadDefinitionsError(t *testing.T, name, expectedError string) {

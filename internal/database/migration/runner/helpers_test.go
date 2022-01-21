@@ -54,8 +54,18 @@ func testStoreWithVersion(version int, dirty bool) *MockStore {
 	store.TryLockFunc.SetDefaultReturn(true, func(err error) error { return err }, nil)
 	store.UpFunc.SetDefaultHook(migrationHook)
 	store.DownFunc.SetDefaultHook(migrationHook)
-	store.VersionFunc.SetDefaultHook(func(ctx context.Context) (int, bool, bool, error) {
-		return version, dirty, true, nil
+	store.VersionsFunc.SetDefaultHook(func(ctx context.Context) ([]int, []int, []int, error) {
+		if dirty {
+			return nil, nil, []int{version}, nil
+		}
+
+		base := 10000
+		ids := make([]int, 0, 4)
+		for v := base; v <= version; v++ {
+			ids = append(ids, v)
+		}
+
+		return ids, nil, nil, nil
 	})
 
 	return store

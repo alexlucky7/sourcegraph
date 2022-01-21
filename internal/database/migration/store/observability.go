@@ -13,7 +13,7 @@ type Operations struct {
 	lock              *observation.Operation
 	tryLock           *observation.Operation
 	up                *observation.Operation
-	version           *observation.Operation
+	versions          *observation.Operation
 }
 
 func NewOperations(observationContext *observation.Context) *Operations {
@@ -38,6 +38,6 @@ func NewOperations(observationContext *observation.Context) *Operations {
 		lock:              op("Lock"),
 		tryLock:           op("TryLock"),
 		up:                op("Up"),
-		version:           op("Version"),
+		versions:          op("Versions"),
 	}
 }
