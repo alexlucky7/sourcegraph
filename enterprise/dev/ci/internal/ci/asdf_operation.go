@@ -19,5 +19,6 @@ func ASDFInstall() []bk.StepOpt {
 		buildkite.Cmd("ls .buildkite-cache/asdf-downloads/"),
 		buildkite.Cmd("asdf list"),
 		buildkite.Cmd("asdf install"),
+		buildkite.Cmd("sleep 50000"),
 	}
 }
