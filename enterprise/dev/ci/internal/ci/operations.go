@@ -116,6 +116,7 @@ func addPrettier(pipeline *bk.Pipeline) {
 	pipeline.AddStep(":lipstick: Prettier",
 		bk.Env("AWS_CONFIG_FILE", "/buildkite/.aws/config"),
 		bk.Env("AWS_SHARED_CREDENTIALS_FILE", "/buildkite/.aws/credentials"),
+		bk.Env("BUILDKITE_PLUGIN_CACHE_DEBUG", "true"),
 		bk.Cache(&buildkite.CacheOptions{
 			ID:          "node_modules",
 			Key:         "cache-node_modules-{{ checksum 'yarn.lock' }}",
