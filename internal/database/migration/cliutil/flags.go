@@ -61,7 +61,7 @@ func Up(commandName string, run RunFunc, out *output.Output) *ffcli.Command {
 		for _, schemaName := range schemaNames {
 			operations = append(operations, runner.MigrationOperation{
 				SchemaName: schemaName,
-				Type:       runner.MigrationOperationTypeTargetedUpgrade,
+				Type:       runner.MigrationOperationTypeUpgrade,
 			})
 		}
 
@@ -156,7 +156,7 @@ func Undo(commandName string, run RunFunc, out *output.Output) *ffcli.Command {
 			Operations: []runner.MigrationOperation{
 				{
 					SchemaName: *schemaNameFlag,
-					Type:       runner.MigrationOperationTypeTargetedRevert,
+					Type:       runner.MigrationOperationTypeRevert,
 				},
 			},
 		})

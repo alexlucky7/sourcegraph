@@ -50,7 +50,7 @@ func testMigrations(t *testing.T, name string, schema *schemas.Schema) {
 		Operations: []runner.MigrationOperation{
 			{
 				SchemaName: name,
-				Type:       runner.MigrationOperationTypeTargetedUpgrade,
+				Type:       runner.MigrationOperationTypeUpgrade,
 			},
 		},
 	}
