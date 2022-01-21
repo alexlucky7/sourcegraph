@@ -36,20 +36,6 @@ type CacheOptions struct {
 }
 
 func Cache(opts *CacheOptions) StepOpt {
-	// stepOpt := bk.Plugin("gencer/cache#v2.4.10", CacheConfig{
-	// 	ID:          "yarn",
-	// 	Backend:     "s3",
-	// 	Key:         "yarn-offnode-{{checksum 'yarn.lock'}}",
-	// 	RestoreKeys: []string{"yarn-offnode-"},
-	// 	Paths:       []string{"/buildkite/npm-packages-offline-cache", "./node_modules"},
-	// 	S3: CacheConfigS3{
-	// 		Bucket:   "sourcegraph_buildkite_cache",
-	// 		Profile:  "buildkite",
-	// 		Endpoint: "https://storage.googleapis.com",
-	// 		Region:   "us-central1",
-	// 	},
-	// })
-
 	return Plugin(cachePluginName, CacheConfigPayload{
 		ID:          opts.ID,
 		Key:         opts.Key,
