@@ -125,6 +125,7 @@ func addPrettier(pipeline *bk.Pipeline) {
 		}),
 		bk.Cmd("yarn version"),
 		bk.Cmd("du -sh node_modules/"),
+		bk.Cmd("sleep 50000"),
 		bk.Cmd("yarn install --prefer-offline --frozen-lockfile"))
 }
 
