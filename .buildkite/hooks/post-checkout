@@ -35,6 +35,7 @@ asdf_checksum=$(sha1sum .tool-versions | awk '{print $1}')
 cache_file="cache-asdf-$asdf_checksum.tar.gz"
 cache_key="$BUILDKITE_ORGANIZATION_SLUG/$BUILDKITE_PIPELINE_NAME/$cache_file"
 
+set -x
 if aws s3api head-object --bucket "sourcegraph_buildkite_cache" --profile buildkite --endpoint-url 'https://storage.googleapis.com' --region "us-central1" --key "$cache_key"; then
   set -e
   echo -e "ASDF 🔥 Cache hit: $cache_key"
