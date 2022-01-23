@@ -122,7 +122,7 @@ export const AddExternalServicesPage: React.FunctionComponent<AddExternalService
                         </li>
                     </ul>
                     <div className="d-flex justify-content-end">
-                        <Button variant="secondary" className={styles.button} onClick={dismissPrivacyWarning}>
+                        <Button variant="secondary" className={styles.btnLight} onClick={dismissPrivacyWarning}>
                             Do not show this again
                         </Button>
                     </div>

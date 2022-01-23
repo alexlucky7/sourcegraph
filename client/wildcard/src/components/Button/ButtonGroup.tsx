@@ -6,7 +6,7 @@ import { ForwardReferenceComponent } from '../..'
 import styles from './Button.module.scss'
 import { BUTTON_GROUP_DIRECTION } from './constants'
 
-interface ButtonGroupProps {
+export interface ButtonGroupProps {
     /**
      * Used to change the element that is rendered, default to div
      */

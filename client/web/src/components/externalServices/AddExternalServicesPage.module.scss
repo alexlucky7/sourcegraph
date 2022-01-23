@@ -1,10 +1,30 @@
+:root {
+    --btn-light-color: #212529;
+    --btn-light-bg: #f8f9fa;
+    --btn-light-hover-bg: #e2e6ea;
+    --btn-light-active-border-color: #dae0e5;
+}
 .add-external-services-page__card {
     display: block;
     margin-bottom: 1rem;
 }
 
-.button {
-    color: #212529;
-    background-color: #f8f9fa;
-    border-color: #f8f9fa;
+// Bootstrap's .btn-light class styles
+// Added important flags to prevent style override on theme-light and theme-dark
+.btn-light {
+    color: var(--btn-light-color) !important;
+    background-color: var(--btn-light-bg);
+    border-color: var(--btn-light-bg);
+
+    &:hover:not(:focus) {
+        background-color: var(--btn-light-hover-bg) !important;
+        border-color: var(--btn-light-hover-bg) !important;
+    }
+
+    &:focus,
+    &:active {
+        background-color: var(--btn-light-hover-bg) !important;
+        border-color: var(--btn-light-active-border-color) !important;
+        box-shadow: 0 0 0 2px rgba(216, 217, 219, 0.5) !important;
+    }
 }
