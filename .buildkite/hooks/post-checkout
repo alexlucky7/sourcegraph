@@ -28,8 +28,8 @@ aws configure set aws_secret_access_key "$BUILDKITE_HMAC_SECRET" --profile build
 unset AWS_SHARED_CREDENTIALS_FILE
 unset AWS_CONFIG_FILE
 
-# Skip on the pipeline upload because it runs on normal agents for now
-if [ "$BUILDKITE_STEP_KEY" = "pipeline-upload" ]; then 
+# Skip on normal queues because standard agents do not have fresh asdf installs
+if [ "$BUILDKITE_AGENT_META_DATA_QUEUE" = "standard,default" ]; then 
   exit 0
 fi
 
