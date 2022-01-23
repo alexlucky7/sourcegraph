@@ -43,7 +43,6 @@ if aws s3api head-object --bucket "sourcegraph_buildkite_cache" --profile buildk
   pushd "$HOME"
   tar xzf "$cache_file"
   popd
-  asdf install
 else
   set -e
   echo "--- installing all asdf tool versions"

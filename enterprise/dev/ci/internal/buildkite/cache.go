@@ -1,8 +1,8 @@
 package buildkite
 
-// const cachePluginName = "gencer/cache#v2.4.10"
+const cachePluginName = "gencer/cache#v2.4.10"
 
-const cachePluginName = "jhchabran/cache#a006be99a6d5bfbab177ddbf8c988bdce3bd2a0e"
+// const cachePluginName = "jhchabran/cache#a006be99a6d5bfbab177ddbf8c988bdce3bd2a0e"
 
 // CacheConfig represents the configuration data for https://github.com/gencer/cache-buildkite-plugin
 type CacheConfigPayload struct {
@@ -42,6 +42,7 @@ func Cache(opts *CacheOptions) StepOpt {
 		RestoreKeys: opts.RestoreKeys,
 		Paths:       opts.Paths,
 		Backend:     "s3",
+		Compress:    true,
 		S3: CacheConfigS3Payload{
 			Bucket:   "sourcegraph_buildkite_cache",
 			Profile:  "buildkite",
