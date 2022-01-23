@@ -50,7 +50,7 @@ else
   asdf install
   echo "--- caching asdf installation"
   pushd "$HOME"
-  tar chfz "$cache_file" .asdf
+  tar cfz "$cache_file" .asdf
   popd
   aws s3 cp --profile buildkite --endpoint-url 'https://storage.googleapis.com' --region "us-central1" "$HOME/$cache_file" "s3://sourcegraph_buildkite_cache/$cache_key" 
 fi
