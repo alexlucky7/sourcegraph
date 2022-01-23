@@ -25,8 +25,6 @@ AWS_SHARED_CREDENTIALS_FILE="/buildkite/.aws/credentials"
 export AWS_SHARED_CREDENTIALS_FILE
 aws configure set aws_access_key_id "$BUILDKITE_HMAC_KEY" --profile buildkite
 aws configure set aws_secret_access_key "$BUILDKITE_HMAC_SECRET" --profile buildkite
-unset AWS_SHARED_CREDENTIALS_FILE
-unset AWS_CONFIG_FILE
 
 # Skip on normal queues because standard agents do not have fresh asdf installs
 if [ "$BUILDKITE_AGENT_META_DATA_QUEUE" = "standard,default" ]; then 
@@ -52,3 +50,6 @@ else
   popd
   aws s3 cp --profile buildkite --endpoint-url 'https://storage.googleapis.com' --region "us-central1" "$HOME/$cache_file" "s3://sourcegraph_buildkite_cache/$cache_key" 
 fi
+
+unset AWS_SHARED_CREDENTIALS_FILE
+unset AWS_CONFIG_FILE
