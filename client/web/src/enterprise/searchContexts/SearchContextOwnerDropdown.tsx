@@ -1,8 +1,9 @@
 import classNames from 'classnames'
-import React, { useCallback, useState, useMemo } from 'react'
-import { Dropdown, DropdownItem, DropdownMenu, DropdownToggle } from 'reactstrap'
+import MenuDownIcon from 'mdi-react/MenuDownIcon'
+import React, { useMemo } from 'react'
 
 import { Namespace } from '@sourcegraph/shared/src/schema'
+import { Menu, MenuButton, MenuItem, Popover, PopoverContent } from '@sourcegraph/wildcard'
 
 import { AuthenticatedUser } from '../../auth'
 
@@ -48,45 +49,53 @@ export const SearchContextOwnerDropdown: React.FunctionComponent<SearchContextOw
     selectedNamespace,
     setSelectedNamespace,
 }) => {
-    const [isOpen, setIsOpen] = useState(false)
-    const toggleIsOpen = useCallback(() => setIsOpen(open => !open), [])
-
     const selectedUserNamespace = useMemo(() => getSelectedNamespaceFromUser(authenticatedUser), [authenticatedUser])
     return (
-        <Dropdown isOpen={isOpen} toggle={toggleIsOpen}>
-            <DropdownToggle
-                className={classNames('form-control', styles.searchContextOwnerDropdownToggle)}
-                caret={true}
-                color="outline-secondary"
-                disabled={isDisabled}
-                data-tooltip={isDisabled ? "Owner can't be changed." : ''}
-            >
-                <div>{selectedNamespace.type === 'global-owner' ? 'Global' : `@${selectedNamespace.name}`}</div>
-            </DropdownToggle>
-            <DropdownMenu>
-                <DropdownItem onClick={() => setSelectedNamespace(selectedUserNamespace)}>
-                    @{authenticatedUser.username} <span className="text-muted">(you)</span>
-                </DropdownItem>
-                {authenticatedUser.organizations.nodes.map(org => (
-                    <DropdownItem
-                        key={org.name}
-                        onClick={() => setSelectedNamespace({ id: org.id, type: 'org', name: org.name })}
+        <Menu>
+            {() => (
+                <>
+                    <MenuButton
+                        className={classNames('form-control', styles.searchContextOwnerDropdownToggle)}
+                        color="outline-secondary"
+                        disabled={isDisabled}
+                        data-tooltip={isDisabled ? "Owner can't be changed." : ''}
                     >
-                        @{org.name}
-                    </DropdownItem>
-                ))}
-                {authenticatedUser.siteAdmin && (
-                    <>
-                        <hr />
-                        <DropdownItem
-                            onClick={() => setSelectedNamespace({ id: null, type: 'global-owner', name: '' })}
-                        >
-                            <div>Global owner</div>
-                            <div className="text-muted">Available to everyone.</div>
-                        </DropdownItem>
-                    </>
-                )}
-            </DropdownMenu>
-        </Dropdown>
+                        <div>
+                            {selectedNamespace.type === 'global-owner' ? 'Global' : `@${selectedNamespace.name}`}{' '}
+                            {/* MenuButton does not have an icon by default */}
+                            <MenuDownIcon className="icon-inline" />
+                        </div>
+                    </MenuButton>
+                    <Popover>
+                        <PopoverContent>
+                            <MenuItem onSelect={() => setSelectedNamespace(selectedUserNamespace)}>
+                                @{authenticatedUser.username} <span className="text-muted">(you)</span>
+                            </MenuItem>
+                            {authenticatedUser.organizations.nodes.map(org => (
+                                <MenuItem
+                                    key={org.name}
+                                    onSelect={() => setSelectedNamespace({ id: org.id, type: 'org', name: org.name })}
+                                >
+                                    @{org.name}
+                                </MenuItem>
+                            ))}
+                            {authenticatedUser.siteAdmin && (
+                                <>
+                                    <hr />
+                                    <MenuItem
+                                        onSelect={() =>
+                                            setSelectedNamespace({ id: null, type: 'global-owner', name: '' })
+                                        }
+                                    >
+                                        <div>Global owner</div>
+                                        <div className="text-muted">Available to everyone.</div>
+                                    </MenuItem>
+                                </>
+                            )}
+                        </PopoverContent>
+                    </Popover>
+                </>
+            )}
+        </Menu>
     )
 }

@@ -1,0 +1,44 @@
+:root {
+    --dropdown-item-padding-y: 0.5rem;
+    --dropdown-item-padding-x: 1.5rem;
+    --font-weight-normal: 400;
+    --dropdown-link-color: #212529;
+    --dropdown-link-active-color: #ffffff;
+    --dropdown-link-active-bg: #007bff;
+    --dropdown-link-disabled-color: #6c757d;
+    --dropdown-link-hover-color: darken(#212529, 5%);
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%; // For `<button>`s
+    padding: var(--dropdown-item-padding-y) var(--dropdown-item-padding-x);
+    clear: both;
+    font-weight: var(--font-weight-normal);
+    color: var(--dropdown-link-color);
+    text-align: inherit; // For `<button>`s
+    white-space: nowrap; // prevent links from randomly breaking onto new lines
+    background-color: transparent; // For `<button>`s
+    border: 0; // For `<button>`s
+
+    // Prevent dropdown overflow if there's no padding
+    // See https://github.com/twbs/bootstrap/pull/27703
+    &:hover,
+    &:focus {
+        color: var(--dropdown-link-hover-color);
+        text-decoration: none;
+    }
+
+    &.active,
+    &:active {
+        color: var(--dropdown-link-active-color);
+        text-decoration: none;
+    }
+
+    &.disabled,
+    &:disabled {
+        color: var(--dropdown-link-disabled-color);
+        pointer-events: none;
+        background-color: transparent;
+    }
+}

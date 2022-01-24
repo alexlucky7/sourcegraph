@@ -1,9 +1,8 @@
 import classNames from 'classnames'
-import React, { useState } from 'react'
-import { ButtonDropdown, DropdownItem, DropdownMenu, DropdownToggle } from 'reactstrap'
+import React from 'react'
 
 import { EXTENSION_CATEGORIES } from '@sourcegraph/shared/src/schema/extensionSchema'
-import { Button } from '@sourcegraph/wildcard'
+import { Button, Menu, MenuButton, MenuDivider, MenuItem, Popover, PopoverContent } from '@sourcegraph/wildcard'
 
 import { SidebarGroup, SidebarGroupHeader } from '../components/Sidebar'
 
@@ -43,9 +42,6 @@ export const ExtensionRegistrySidenav: React.FunctionComponent<
     showExperimentalExtensions,
     toggleExperimentalExtensions,
 }) => {
-    const [isOpen, setIsOpen] = useState(false)
-    const toggleIsOpen = (): void => setIsOpen(open => !open)
-
     const showAll = (): void => setEnablementFilter('all')
     const showEnabled = (): void => setEnablementFilter('enabled')
     const showDisabled = (): void => setEnablementFilter('disabled')
@@ -71,43 +67,49 @@ export const ExtensionRegistrySidenav: React.FunctionComponent<
 
             <hr className={classNames('my-3', styles.divider)} />
 
-            <ButtonDropdown isOpen={isOpen} toggle={toggleIsOpen} className="ml-2">
-                <DropdownToggle className="btn-sm" caret={true} color="outline-secondary">
-                    {enablementFilterToLabel[enablementFilter]}
-                </DropdownToggle>
-                <DropdownMenu>
-                    <DropdownItem onClick={showAll} disabled={enablementFilter === 'all'}>
-                        Show all
-                    </DropdownItem>
-                    <DropdownItem onClick={showEnabled} disabled={enablementFilter === 'enabled'}>
-                        Show enabled extensions
-                    </DropdownItem>
-                    <DropdownItem onClick={showDisabled} disabled={enablementFilter === 'disabled'}>
-                        Show disabled extensions
-                    </DropdownItem>
+            <Menu>
+                {() => (
+                    <>
+                        <MenuButton className="btn-sm" color="outline-secondary">
+                            {enablementFilterToLabel[enablementFilter]}
+                        </MenuButton>
+                        <Popover>
+                            <PopoverContent className="ml-2">
+                                <MenuItem onSelect={showAll} disabled={enablementFilter === 'all'}>
+                                    Show all
+                                </MenuItem>
+                                <MenuItem onSelect={showEnabled} disabled={enablementFilter === 'enabled'}>
+                                    Show enabled extensions
+                                </MenuItem>
+                                <MenuItem onSelect={showDisabled} disabled={enablementFilter === 'disabled'}>
+                                    Show disabled extensions
+                                </MenuItem>
 
-                    <DropdownItem divider={true} />
+                                <MenuDivider />
 
-                    <DropdownItem
-                        // Hack: clicking <label> inside <DropdownItem> doesn't affect checked state,
-                        // so use a <span> for which click events are handled by <DropdownItem>.
-                        onClick={toggleExperimentalExtensions}
-                    >
-                        <div className="d-flex align-items-center">
-                            <input
-                                type="checkbox"
-                                checked={showExperimentalExtensions}
-                                onChange={toggleExperimentalExtensions}
-                                className=""
-                                aria-labelledby="show-experimental-extensions"
-                            />
-                            <span className="m-0 pl-2" id="show-experimental-extensions">
-                                Show experimental extensions
-                            </span>
-                        </div>
-                    </DropdownItem>
-                </DropdownMenu>
-            </ButtonDropdown>
+                                <MenuItem
+                                    // Hack: clicking <label> inside <MenuItem> doesn't affect checked state,
+                                    // so use a <span> for which click events are handled by <MenuItem>.
+                                    onSelect={toggleExperimentalExtensions}
+                                >
+                                    <div className="d-flex align-items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={showExperimentalExtensions}
+                                            onChange={toggleExperimentalExtensions}
+                                            className=""
+                                            aria-labelledby="show-experimental-extensions"
+                                        />
+                                        <span className="m-0 pl-2" id="show-experimental-extensions">
+                                            Show experimental extensions
+                                        </span>
+                                    </div>
+                                </MenuItem>
+                            </PopoverContent>
+                        </Popover>
+                    </>
+                )}
+            </Menu>
 
             <ExtensionSidenavBanner />
         </div>

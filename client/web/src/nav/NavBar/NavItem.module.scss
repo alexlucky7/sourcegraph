@@ -20,6 +20,10 @@
     align-items: center;
     justify-content: center;
     color: var(--body-color);
+    letter-spacing: normal;
+    border: none;
+    border-radius: 0;
+    box-shadow: none !important;
     &:hover {
         text-decoration: none;
     }

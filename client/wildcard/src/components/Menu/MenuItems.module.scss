@@ -1,0 +1,33 @@
+:root {
+    --dropdown-min-width: 10rem;
+    --dropdown-padding-y: 0.5rem;
+    --dropdown-spacer: 0.125rem;
+    --dropdown-font-size: 1rem;
+    --dropdown-color: #212529;
+    --dropdown-bg: #ffffff;
+    --dropdown-border-width: 1px;
+    --dropdown-border-color: rgba(#000000, 0.15);
+    --dropdown-border-radius: 0.25rem;
+    --dropdown-box-shadow: 0 0.5rem 1rem rgba(#000000, 0.175);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    display: none; // none by default, but block on "open" of the menu
+    float: left;
+    min-width: var(--dropdown-min-width);
+    padding: var(--dropdown-padding-y) 0;
+    margin: var(--dropdown-spacer) 0 0; // override default ul
+    font-size: var(--dropdown-font-size);
+    color: var(--dropdown-color);
+    text-align: left; // Ensures proper alignment if parent has it changed (e.g., modal footer)
+    list-style: none;
+    background-color: var(--dropdown-bg);
+    background-clip: padding-box;
+    border: var(--dropdown-border-width) solid var(--dropdown-border-color);
+    border-radius: var(--dropdown-border-radius);
+    box-shadow: var(--dropdown-box-shadow);
+}

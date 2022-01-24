@@ -1,8 +1,7 @@
 import classNames from 'classnames'
 import * as H from 'history'
 import DotsVerticalIcon from 'mdi-react/DotsVerticalIcon'
-import React, { useState, useMemo, useEffect, useCallback } from 'react'
-import { ButtonDropdown, DropdownItem, DropdownMenu } from 'reactstrap'
+import React, { useState, useMemo, useEffect } from 'react'
 
 import { ErrorLike } from '@sourcegraph/common'
 import { Scalars } from '@sourcegraph/shared/src/graphql-operations'
@@ -10,6 +9,7 @@ import { PlatformContextProps } from '@sourcegraph/shared/src/platform/context'
 import * as GQL from '@sourcegraph/shared/src/schema'
 import { SettingsCascadeOrError } from '@sourcegraph/shared/src/settings/settings'
 import { TelemetryProps } from '@sourcegraph/shared/src/telemetry/telemetryService'
+import { Menu, MenuItem, Popover, PopoverContent } from '@sourcegraph/wildcard'
 
 import { AuthenticatedUser } from '../auth'
 import { Breadcrumbs, BreadcrumbsProps } from '../components/Breadcrumbs'
@@ -214,9 +214,6 @@ export const RepoHeader: React.FunctionComponent<Props> = ({
         [context, repoHeaderContributions, isLarge]
     )
 
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-    const toggleDropdownOpen = useCallback(() => setIsDropdownOpen(isOpen => !isOpen), [])
-
     return (
         <nav
             data-testid="repo-header"
@@ -261,23 +258,24 @@ export const RepoHeader: React.FunctionComponent<Props> = ({
                 ) : (
                     <ul className="navbar-nav">
                         <li className="nav-item">
-                            <ButtonDropdown
-                                className="menu-nav-item"
-                                direction="down"
-                                isOpen={isDropdownOpen}
-                                toggle={toggleDropdownOpen}
-                            >
-                                <RepoHeaderActionDropdownToggle className="btn btn-icon" nav={true}>
-                                    <DotsVerticalIcon className="icon-inline" />
-                                </RepoHeaderActionDropdownToggle>
-                                <DropdownMenu>
-                                    {rightActions.map((a, index) => (
-                                        <DropdownItem className="p-0" key={a.id || index}>
-                                            {a.element}
-                                        </DropdownItem>
-                                    ))}
-                                </DropdownMenu>
-                            </ButtonDropdown>
+                            <Menu>
+                                {() => (
+                                    <>
+                                        <RepoHeaderActionDropdownToggle className="btn btn-icon">
+                                            <DotsVerticalIcon className="icon-inline" />
+                                        </RepoHeaderActionDropdownToggle>
+                                        <Popover>
+                                            <PopoverContent className="menu-nav-item">
+                                                {rightActions.map((a, index) => (
+                                                    <MenuItem className="p-0" key={a.id || index} onSelect={() => {}}>
+                                                        {a.element}
+                                                    </MenuItem>
+                                                ))}
+                                            </PopoverContent>
+                                        </Popover>
+                                    </>
+                                )}
+                            </Menu>
                         </li>
                     </ul>
                 )}

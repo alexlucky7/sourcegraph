@@ -71,76 +71,17 @@ exports[`ExtensionsQueryInputToolbar renders 1`] = `
     <hr
       class="my-3 divider"
     />
-    <div
-      class="ml-2 btn-group"
+    <button
+      aria-controls="menu--1"
+      aria-haspopup="true"
+      class="btn btn-sm"
+      color="outline-secondary"
+      data-reach-menu-button=""
+      id="menu-button--menu"
+      type="button"
     >
-      <button
-        aria-expanded="false"
-        aria-haspopup="true"
-        class="btn-sm dropdown-toggle btn btn-outline-secondary"
-        type="button"
-      >
-        Show all
-      </button>
-      <div
-        aria-hidden="true"
-        class="dropdown-menu"
-        role="menu"
-        tabindex="-1"
-      >
-        <button
-          class="disabled dropdown-item"
-          disabled=""
-          tabindex="-1"
-          type="button"
-        >
-          Show all
-        </button>
-        <button
-          class="dropdown-item"
-          role="menuitem"
-          tabindex="0"
-          type="button"
-        >
-          Show enabled extensions
-        </button>
-        <button
-          class="dropdown-item"
-          role="menuitem"
-          tabindex="0"
-          type="button"
-        >
-          Show disabled extensions
-        </button>
-        <div
-          class="dropdown-divider"
-          tabindex="-1"
-        />
-        <button
-          class="dropdown-item"
-          role="menuitem"
-          tabindex="0"
-          type="button"
-        >
-          <div
-            class="d-flex align-items-center"
-          >
-            <input
-              aria-labelledby="show-experimental-extensions"
-              checked=""
-              class=""
-              type="checkbox"
-            />
-            <span
-              class="m-0 pl-2"
-              id="show-experimental-extensions"
-            >
-              Show experimental extensions
-            </span>
-          </div>
-        </button>
-      </div>
-    </div>
+      Show all
+    </button>
     <div
       class="banner mx-2"
     >

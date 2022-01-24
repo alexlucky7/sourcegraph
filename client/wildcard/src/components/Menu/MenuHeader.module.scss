@@ -1,0 +1,14 @@
+:root {
+    --dropdown-header-padding: 0.5rem 1.5rem;
+    --dropdown-header-color: #6c757d;
+    --font-size-sm: 0.875rem;
+}
+
+.dropdown-header {
+    display: block;
+    padding: var(--dropdown-header-padding);
+    margin-bottom: 0; // for use with heading elements
+    font-size: var(--font-size-sm);
+    color: var(--dropdown-header-color);
+    white-space: nowrap; // as with > li > a
+}
