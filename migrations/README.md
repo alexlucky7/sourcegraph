@@ -108,3 +108,4 @@ COMMIT;
 5. Your new `.down.sql` should be an empty migration.
 
 For an example of how this looks: https://github.com/sourcegraph/sourcegraph/pull/25717
+Hello WorldMEMMEMEM
