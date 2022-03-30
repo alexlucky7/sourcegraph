@@ -72,3 +72,4 @@ yarn run test:regression
 ### Codeintel QA
 
 TODO: add instrucions to run codeintel QA locally
+Hello WorldMEMMEMEM

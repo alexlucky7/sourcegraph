@@ -77,3 +77,4 @@ rm -rf testdata/indexes/
 ```
 
 Then rerun the testing steps described above (starting at `clone-and-index.sh`)
+Hello WorldMEMMEMEM
